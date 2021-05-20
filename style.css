@@ -4,28 +4,86 @@
     bottom: 0;
     left: 0;
     right: 0;
+
+    background-color: black;
+}
+
+#melody-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    overflow: hidden;
+}
+
+#melody-panel > div {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    overflow: visible;
+    transform: translate(50%, 50%);
+}
+
+#melody-panel > div > div {
+    position: absolute;
+    border-radius: 50% 50%;
+
+    background-color: rgba(128, 128, 128, 0.1);
+
+    transform-origin: 50% 50%;
+    will-change: transform;
+}
+
+#melody-panel > div:nth-child(7n+3) > div.activated {
+    background-color: rgba(255, 64, 64, 0.3);
+}
+#melody-panel > div:nth-child(7n+5) > div.activated {
+    background-color: rgba(255, 192, 64, 0.3);
+}
+#melody-panel > div:nth-child(7n+7) > div.activated {
+    background-color: rgba(255, 255, 64, 0.3);
+}
+#melody-panel > div:nth-child(7n+1) > div.activated {
+    background-color: rgba(64, 255, 64, 0.3);
+}
+#melody-panel > div:nth-child(7n+4) > div.activated {
+    background-color: rgba(64, 255, 255, 0.3);
+}
+#melody-panel > div:nth-child(7n+2) > div.activated {
+    background-color: rgba(64, 64, 255, 0.3);
+}
+#melody-panel > div:nth-child(7n+6) > div.activated {
+    background-color: rgba(255, 64, 255, 0.3);
+}
+
+#tool-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
 }
 
 #device-and-music-data-panel {
     position: absolute;
     top: 0;
     left: 0;
-
-    background-color: red;
 }
 
-#melody-panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    background-color: blue;
+/* #device-and-music-data-panel > */
+#midi-file-drop {
+    color: white;
 }
 
-#tool-panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    background-color: green;
+/* #device-and-music-data-panel > */
+#play-button {
+    margin: 1ex;
+    border: 1px solid white;
+    border-radius: 5px;
+    background-color: transparent;
+    color: white;
+    font-size: 14px;
 }
