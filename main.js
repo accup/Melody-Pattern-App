@@ -13,11 +13,13 @@ function updateElements(parent, tag, data, update) {
         parent.appendChild(document.createElement(tag));
     }
     for (let index = oldLength - 1; index >= newLength; --index) {
-        parent.removeChild(elements[index]);
+        elements[index].style.display = 'none';
+        // parent.removeChild(elements[index]);
     }
 
     const newElements = parent.children;
     for (let index = 0; index < newLength; ++index) {
+        newElements[index].style.removeProperty('display');
         update(newElements[index], data[index]);
     }
 }
@@ -109,16 +111,31 @@ window.addEventListener('load', e => {
                 }, track.notes);
                 part.start(0);
 
+                const notes = Array.from(track.notes);
+                notes.sort((a, b) => a.time - b.time);
+
                 tracks.push({
                     channel: track.channel,
                     volume: volume,
                     synth: synth,
                     part: part,
-                    notes: track.notes,
+                    notes: notes,
+                    offsets: {
+                        off: 0,
+                        on: 0,
+                    },
                 });
                 melodyPanel.appendChild(div);
             });
 
+            // Initialization
+            function init() {
+                tracks.forEach(track => {
+                    track.offsets.off = 0;
+                    track.offsets.on = 0;
+                });
+            }
+            Tone.Transport.schedule(init, 0);
             // Infinite Loop
             function replay() {
                 Tone.Transport.seconds = 0.0;
@@ -146,8 +163,11 @@ window.addEventListener('load', e => {
         const file = files[0];
         loadFile(file);
     });
-    playButton.addEventListener('click', e => {
-        Tone.Transport.stop();
+    playButton.addEventListener('click', async e => {
+        await Tone.start();
+        if (Tone.Transport.state !== 'stopped') {
+            Tone.Transport.stop();
+        }
         Tone.Transport.start();
     });
 
@@ -158,6 +178,7 @@ window.addEventListener('load', e => {
     requestAnimationFrame(function animationLoop() {
         const currentTime = Tone.Transport.seconds;
         const scale = 200;
+
         let circleFactor;
         switch (state.mode) {
             case '12 semitones':
@@ -178,10 +199,16 @@ window.addEventListener('load', e => {
         }
 
         updateElements(melodyPanel, 'div', tracks, (element, track) => {
-            const notes = track.notes.filter(note => {
-                const offset = currentTime - note.time;
-                return -3 <= offset && offset <= note.duration;
-            });
+            const length = track.notes.length;
+            for (; track.offsets.on < length; ++track.offsets.on) {
+                const note = track.notes[track.offsets.on];
+                if (currentTime + 3 < note.time) break;
+            }
+            for (; track.offsets.off < length; ++track.offsets.off) {
+                const note = track.notes[track.offsets.off];
+                if (currentTime < note.time + note.duration) break;
+            }
+            const notes = track.notes.slice(track.offsets.off, track.offsets.on);
 
             updateElements(element, 'div', notes, (element, note) => {
                 const offset = currentTime - note.time;
@@ -197,6 +224,9 @@ window.addEventListener('load', e => {
                     'activated',
                     0 <= offset && offset < note.duration,
                 );
+                if (note.duration <= offset) {
+                    element.style.display = 'none';
+                }
             });
         });
 
