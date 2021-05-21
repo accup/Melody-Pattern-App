@@ -19,50 +19,13 @@
     isolation: isolate;
 }
 
-#melody-panel > div {
+/* #melody-panel > */
+#melody-panel-canvas {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 0;
-    right: 0;
-
-    overflow: visible;
-    transform-origin: 50% 50%;
-    transform: translate(50%, 50%);
-    mix-blend-mode: screen;
-}
-
-#melody-panel > div > div {
-    position: absolute;
-    border-radius: 50% 50%;
-
-    background-color: rgba(16, 16, 16);
-    mix-blend-mode: screen;
-
-    transform-origin: 50% 50%;
-    will-change: transform;
-}
-
-#melody-panel > div:nth-child(7n+3) > div.activated {
-    background-color: rgba(96, 16, 16);
-}
-#melody-panel > div:nth-child(7n+5) > div.activated {
-    background-color: rgba(96, 32, 16);
-}
-#melody-panel > div:nth-child(7n+7) > div.activated {
-    background-color: rgba(96, 96, 16);
-}
-#melody-panel > div:nth-child(7n+1) > div.activated {
-    background-color: rgba(16, 96, 16);
-}
-#melody-panel > div:nth-child(7n+4) > div.activated {
-    background-color: rgba(16, 96, 96);
-}
-#melody-panel > div:nth-child(7n+2) > div.activated {
-    background-color: rgba(16, 16, 96);
-}
-#melody-panel > div:nth-child(7n+6) > div.activated {
-    background-color: rgba(96, 16, 96);
+    width: 100%;
+    height: 100%;
 }
 
 #tool-panel {
