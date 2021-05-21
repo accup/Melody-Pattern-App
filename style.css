@@ -16,6 +16,7 @@
     right: 0;
 
     overflow: hidden;
+    isolation: isolate;
 }
 
 #melody-panel > div {
@@ -26,39 +27,42 @@
     right: 0;
 
     overflow: visible;
+    transform-origin: 50% 50%;
     transform: translate(50%, 50%);
+    mix-blend-mode: screen;
 }
 
 #melody-panel > div > div {
     position: absolute;
     border-radius: 50% 50%;
 
-    background-color: rgba(128, 128, 128, 0.1);
+    background-color: rgba(16, 16, 16);
+    mix-blend-mode: screen;
 
     transform-origin: 50% 50%;
     will-change: transform;
 }
 
 #melody-panel > div:nth-child(7n+3) > div.activated {
-    background-color: rgba(255, 64, 64, 0.3);
+    background-color: rgba(96, 16, 16);
 }
 #melody-panel > div:nth-child(7n+5) > div.activated {
-    background-color: rgba(255, 192, 64, 0.3);
+    background-color: rgba(96, 32, 16);
 }
 #melody-panel > div:nth-child(7n+7) > div.activated {
-    background-color: rgba(255, 255, 64, 0.3);
+    background-color: rgba(96, 96, 16);
 }
 #melody-panel > div:nth-child(7n+1) > div.activated {
-    background-color: rgba(64, 255, 64, 0.3);
+    background-color: rgba(16, 96, 16);
 }
 #melody-panel > div:nth-child(7n+4) > div.activated {
-    background-color: rgba(64, 255, 255, 0.3);
+    background-color: rgba(16, 96, 96);
 }
 #melody-panel > div:nth-child(7n+2) > div.activated {
-    background-color: rgba(64, 64, 255, 0.3);
+    background-color: rgba(16, 16, 96);
 }
 #melody-panel > div:nth-child(7n+6) > div.activated {
-    background-color: rgba(255, 64, 255, 0.3);
+    background-color: rgba(96, 16, 96);
 }
 
 #tool-panel {
@@ -78,12 +82,61 @@
     color: white;
 }
 
-/* #device-and-music-data-panel > */
-#play-button {
+#device-and-music-data-panel button {
     margin: 1ex;
     border: 1px solid white;
     border-radius: 5px;
     background-color: transparent;
     color: white;
     font-size: 14px;
+}
+
+#device-and-music-data-panel .button-group {
+    margin: 1ex;
+    font-size: 14px;
+}
+
+#device-and-music-data-panel .button-group .button-group-item {
+    font-size: 14px;
+}
+
+.button-group {
+    width: max-content;
+    overflow: visible;
+
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.button-group > .button-group-item {
+    flex: 0 0 auto;
+
+    padding: 0.2em 0.5em;
+    cursor: default;
+
+    color: white;
+    background-color: gray;
+
+    z-index: 0;
+}
+
+.button-group > .button-group-item:first-child {
+    border-radius: 4px 0 0 4px;
+}
+.button-group > .button-group-item:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.button-group > .button-group-item.selected {
+    color: black;
+    background-color: white;
+    margin: -1px;
+    border: 1px solid white;
+    box-shadow: 0 0 3px black;
+
+    font-weight: 600;
+
+    z-index: 1;
 }
