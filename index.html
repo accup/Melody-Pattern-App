@@ -30,7 +30,11 @@
             <!-- <select id="output-device-input">
             </select> -->
             <!-- <input id="midi-file-input" type="file" accept="audio/midi"> -->
-            <div id="midi-file-drop">Please drop your MIDI file into the window.</div>
+            <div>
+                <input id="midi-file-drop" type="file">
+                <label id="file-name-label" for="midi-file-drop">Please drop your MIDI file into the window or click
+                    this text to open a dialogue.</label>
+            </div>
             <button id="play-button">Click to Play</button>
             <div id="change-circle-mode-button-group" class="button-group">
                 <div class="button-group-item selected" data-value="12 semitones">12半音</div>

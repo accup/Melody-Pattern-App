@@ -79,6 +79,9 @@
 
 /* #device-and-music-data-panel > */
 #midi-file-drop {
+    display: none;
+}
+#midi-file-drop ~ label {
     color: white;
 }
 

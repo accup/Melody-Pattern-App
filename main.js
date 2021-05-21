@@ -58,6 +58,7 @@ window.addEventListener('load', e => {
     const app = document.getElementById('app');
     const melodyPanel = document.getElementById('melody-panel');
     const midiFileDrop = document.getElementById('midi-file-drop');
+    const fileNameLabel = document.getElementById('file-name-label');
     const playButton = document.getElementById('play-button');
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
 
@@ -67,18 +68,9 @@ window.addEventListener('load', e => {
         mode: '12 semitones',
     };
 
-    app.addEventListener('dragover', e => {
-        e.preventDefault();
-    });
-    app.addEventListener('drop', e => {
-        e.preventDefault();
-
-        const files = e.dataTransfer.files;
-        if (files.length == 0) return;
-
-        const file = files[0];
+    function loadFile(file) {
         file.arrayBuffer().then(buffer => {
-            midiFileDrop.textContent = `${file.name} (Please drop your MIDI file into the window.)`;
+            fileNameLabel.textContent = `${file.name} (Please drop your MIDI file into the window.)`;
             midi = new Midi(buffer);
 
             Tone.Transport.stop();
@@ -133,9 +125,26 @@ window.addEventListener('load', e => {
             }
             Tone.Transport.schedule(replay, midi.duration);
         });
+    }
+
+    app.addEventListener('dragover', e => {
+        e.preventDefault();
     });
-    midiFileDrop.addEventListener('mouseup', e => {
-        Tone.Transport.start();
+    app.addEventListener('drop', e => {
+        e.preventDefault();
+
+        const files = e.dataTransfer.files;
+        if (files.length == 0) return;
+
+        const file = files[0];
+        loadFile(file);
+    });
+    midiFileDrop.addEventListener('change', e => {
+        const files = e.target.files;
+        if (files.length == 0) return;
+
+        const file = files[0];
+        loadFile(file);
     });
     playButton.addEventListener('click', e => {
         Tone.Transport.stop();
