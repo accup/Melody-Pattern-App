@@ -172,7 +172,7 @@ window.addEventListener('load', e => {
     /** @type {HTMLCanvasElement} */
     const melodyPanelCanvas = document.getElementById('melody-panel-canvas');
     const midiFileDrop = document.getElementById('midi-file-drop');
-    const fileNameLabel = document.getElementById('file-name-label');
+    const fileNameDiv = document.getElementById('file-name-div');
     const playButton = document.getElementById('play-button');
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
 
@@ -187,7 +187,7 @@ window.addEventListener('load', e => {
 
     function loadFile(file) {
         file.arrayBuffer().then(buffer => {
-            fileNameLabel.textContent = `${file.name} (Please drop your MIDI file into the window.)`;
+            fileNameDiv.textContent = file.name;
             midi = new Midi(buffer);
 
             Tone.Transport.stop();
