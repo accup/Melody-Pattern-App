@@ -22,11 +22,7 @@ const fsSource = `
     varying lowp vec2 vTextureCoord;
 
     void main() {
-        if (distance(vTextureCoord, vec2(0.5, 0.5)) <= 0.5) {
-            gl_FragColor = vColor;
-        } else {
-            discard;
-        }
+        gl_FragColor = vColor * step(distance(vTextureCoord, vec2(0.5, 0.5)), 0.5);
     }
 `;
 
@@ -158,15 +154,15 @@ function initButtonGroup(element, listener) {
 }
 
 
-const deactivatedColor = new Float32Array([0.7, 0.7, 0.7, 0.2]);
+const deactivatedColor = new Float32Array([0.7, 0.7, 0.7, 0.15]);
 const trackColors = [
-    new Float32Array([0.5, 1.0, 0.5, 0.4]),
-    new Float32Array([0.5, 0.5, 1.0, 0.4]),
-    new Float32Array([1.0, 0.5, 0.5, 0.4]),
-    new Float32Array([0.5, 1.0, 1.0, 0.4]),
-    new Float32Array([0.7, 0.5, 0.5, 0.4]),
-    new Float32Array([1.0, 0.5, 1.0, 0.4]),
-    new Float32Array([1.0, 1.0, 0.5, 0.4]),
+    new Float32Array([0.5, 1.0, 0.5, 0.3]),
+    new Float32Array([0.5, 0.5, 1.0, 0.3]),
+    new Float32Array([1.0, 0.5, 0.5, 0.3]),
+    new Float32Array([0.5, 1.0, 1.0, 0.3]),
+    new Float32Array([0.7, 0.5, 0.5, 0.3]),
+    new Float32Array([1.0, 0.5, 1.0, 0.3]),
+    new Float32Array([1.0, 1.0, 0.5, 0.3]),
 ];
 
 
@@ -181,6 +177,7 @@ window.addEventListener('load', e => {
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
 
     const volume = new Tone.Volume(-12).toDestination();
+    const percussionVolume = new Tone.Volume(-6).toDestination();
     let midi = null;
     let duration = 1.0;
     let tracks = [];
@@ -205,18 +202,18 @@ window.addEventListener('load', e => {
                 let synth;
                 if (track.instrument.percussion) {
                     synth = new Tone.PolySynth({
-                        maxPolyphony: 100,
+                        maxPolyphony: 30,
                         voice: Tone.Synth,
                         options: {
                             envelope: {
-                                attack: 0.001,
-                                decay: 0.0,
-                                sustain: 1.0,
-                                release: 0.5,
-                                releaseCurve: "exponential",
+                                attack: 0.01,
+                                decay: 0.07,
+                                sustain: 0.3,
+                                release: 0.3,
                             },
                         },
                     });
+                    synth.connect(percussionVolume);
                 } else {
                     synth = new Tone.PolySynth({
                         maxPolyphony: 100,
@@ -230,9 +227,14 @@ window.addEventListener('load', e => {
                             },
                         },
                     });
+                    synth.connect(volume);
                 }
-                synth.connect(volume);
 
+                if (track.instrument.percussion) {
+                    track.notes.forEach(note => {
+                        note.duration = 0.1;
+                    });
+                }
                 const part = new Tone.Part((time, note) => {
                     synth.triggerAttackRelease(
                         note.name,
@@ -394,6 +396,15 @@ window.addEventListener('load', e => {
 
             const currentTime = Tone.Transport.seconds;
             const scale = 200;
+            const onTime = 3.0;
+            const percussionX = 0.05 * width;
+            const percussionY = 0.4 * height;
+            const percussionW = 0.4 * width;
+            const percussionScale = 50;
+            const percussionDeactivateScale = 20;
+            const percussionOnTime = 0.8;
+            const percussionDuration = 0.0625;
+            const percussionPeriod = 1.0;
 
             let circleFactor;
             switch (state.mode) {
@@ -422,9 +433,16 @@ window.addEventListener('load', e => {
             for (let trackIndex = 0; trackIndex < trackLength; ++trackIndex) {
                 const track = tracks[trackIndex];
                 const noteLength = track.notes.length;
-                for (; track.offsets.off < noteLength; ++track.offsets.off) {
-                    const note = track.notes[track.offsets.off];
-                    if (currentTime < note.time + note.duration) break;
+                if (track.percussion) {
+                    for (; track.offsets.off < noteLength; ++track.offsets.off) {
+                        const note = track.notes[track.offsets.off];
+                        if (currentTime < note.time + percussionDuration) break;
+                    }
+                } else {
+                    for (; track.offsets.off < noteLength; ++track.offsets.off) {
+                        const note = track.notes[track.offsets.off];
+                        if (currentTime < note.time + note.duration) break;
+                    }
                 }
                 track.offsets.active = Math.max(track.offsets.active, track.offsets.off);
                 for (; track.offsets.active < noteLength; ++track.offsets.active) {
@@ -432,72 +450,177 @@ window.addEventListener('load', e => {
                     if (currentTime < note.time) break;
                 }
                 track.offsets.on = Math.max(track.offsets.on, track.offsets.active);
-                for (; track.offsets.on < noteLength; ++track.offsets.on) {
-                    const note = track.notes[track.offsets.on];
-                    if (currentTime < note.time - 3) break;
-                }
-
-                // 色の設定（非アクティブ）
-                gl.uniform4fv(
-                    colorUniform,
-                    deactivatedColor,
-                );
-                for (let noteIndex = track.offsets.active; noteIndex < track.offsets.on; ++noteIndex) {
-                    const note = track.notes[noteIndex];
-                    const offset = currentTime - note.time;
-                    const theta = 2 * Math.PI * note.midi * circleFactor / 12;
-                    const dx = scale * (-offset + 0.5 * note.duration) * Math.cos(theta);
-                    const dy = scale * (-offset + 0.5 * note.duration) * -Math.sin(theta);
-                    const sw = scale * note.duration;
-                    const sh = scale * note.duration;
-
-                    if (offset < note.duration) {
-                        // ワールド兼射影行列の設定
-                        gl.uniformMatrix4fv(
-                            matrixUniform, false,
-                            orthoTranslateScaleMatrix(
-                                sw, sh, 1,
-                                dx, dy, 0,
-                                width, height,
-                            ),
-                        );
-                        gl.drawArrays(
-                            gl.TRIANGLE_STRIP,
-                            0,  // vertex offset
-                            4,  // a number of vertices
-                        );
+                if (track.percussion) {
+                    for (; track.offsets.on < noteLength; ++track.offsets.on) {
+                        const note = track.notes[track.offsets.on];
+                        if (currentTime < note.time - percussionOnTime) break;
+                    }
+                } else {
+                    for (; track.offsets.on < noteLength; ++track.offsets.on) {
+                        const note = track.notes[track.offsets.on];
+                        if (currentTime < note.time - onTime) break;
                     }
                 }
 
-                // 色の設定（アクティブ）
-                gl.uniform4fv(
-                    colorUniform,
-                    trackColors[trackIndex % trackColors.length],
-                );
-                for (let noteIndex = track.offsets.active - 1; noteIndex >= track.offsets.off; --noteIndex) {
-                    const note = track.notes[noteIndex];
-                    const offset = currentTime - note.time;
-                    const theta = 2 * Math.PI * note.midi * circleFactor / 12;
-                    const dx = scale * (-offset + 0.5 * note.duration) * Math.cos(theta);
-                    const dy = scale * (-offset + 0.5 * note.duration) * -Math.sin(theta);
-                    const sw = scale * note.duration;
-                    const sh = scale * note.duration;
+                if (track.percussion) {
+                    // 色の設定（非アクティブ）
+                    gl.uniform4fv(
+                        colorUniform,
+                        deactivatedColor,
+                    );
+                    for (let noteIndex = track.offsets.active; noteIndex < track.offsets.on; ++noteIndex) {
+                        const note = track.notes[noteIndex];
+                        const offset = currentTime - note.time;
+                        const theta = (note.time / percussionPeriod) % 1.0;
+                        const dx = percussionX + percussionW * theta;
+                        const dy = percussionY;
+                        const sw = percussionDeactivateScale;
+                        const sh = percussionDeactivateScale;
 
-                    if (offset < note.duration) {
-                        // ワールド兼射影行列の設定
-                        gl.uniformMatrix4fv(
-                            matrixUniform, false,
-                            orthoTranslateScaleMatrix(
-                                sw, sh, 1,
-                                dx, dy, 0,
-                                width, height,
-                            ),
+                        if (offset < percussionDuration) {
+                            // ワールド兼射影行列の設定
+                            gl.uniformMatrix4fv(
+                                matrixUniform, false,
+                                orthoTranslateScaleMatrix(
+                                    sw, sh, 1,
+                                    dx, dy, 0,
+                                    width, height,
+                                ),
+                            );
+                            gl.drawArrays(
+                                gl.TRIANGLE_STRIP,
+                                0,  // vertex offset
+                                4,  // a number of vertices
+                            );
+                        }
+                    }
+                    // 色の設定（アクティブ）
+                    gl.uniform4fv(
+                        colorUniform,
+                        trackColors[trackIndex % trackColors.length],
+                    );
+                    let isActive = false;
+                    for (let noteIndex = track.offsets.active - 1; noteIndex >= track.offsets.off; --noteIndex) {
+                        const note = track.notes[noteIndex];
+                        const offset = currentTime - note.time;
+                        // 現在の時刻位置に描画
+                        const theta = (currentTime / percussionPeriod) % 1.0;
+                        const dx = percussionX + percussionW * theta;
+                        const dy = percussionY;
+                        const sw = percussionScale * note.velocity;
+                        const sh = percussionScale * note.velocity;
+
+                        if (offset < percussionDuration) {
+                            // ワールド兼射影行列の設定
+                            gl.uniformMatrix4fv(
+                                matrixUniform, false,
+                                orthoTranslateScaleMatrix(
+                                    sw, sh, 1,
+                                    dx, dy, 0,
+                                    width, height,
+                                ),
+                            );
+                            gl.drawArrays(
+                                gl.TRIANGLE_STRIP,
+                                0,  // vertex offset
+                                4,  // a number of vertices
+                            );
+                            isActive = true;
+                        }
+                    }
+                    if (!isActive) {
+                        // 色の設定（非アクティブ）
+                        gl.uniform4fv(
+                            colorUniform,
+                            deactivatedColor,
                         );
-                        gl.drawArrays(
-                            gl.TRIANGLE_STRIP,
-                            0,  // vertex offset
-                            4,  // a number of vertices
-                        );
+                        {
+                            // 現在の時刻位置に描画
+                            const theta = (currentTime / percussionPeriod) % 1.0;
+                            const dx = percussionX + percussionW * theta;
+                            const dy = percussionY;
+                            const sw = percussionDeactivateScale;
+                            const sh = percussionDeactivateScale;
+
+                            // ワールド兼射影行列の設定
+                            gl.uniformMatrix4fv(
+                                matrixUniform, false,
+                                orthoTranslateScaleMatrix(
+                                    sw, sh, 1,
+                                    dx, dy, 0,
+                                    width, height,
+                                ),
+                            );
+                            gl.drawArrays(
+                                gl.TRIANGLE_STRIP,
+                                0,  // vertex offset
+                                4,  // a number of vertices
+                            );
+                        }
+                    }
+                } else {
+                    // 色の設定（非アクティブ）
+                    gl.uniform4fv(
+                        colorUniform,
+                        deactivatedColor,
+                    );
+                    for (let noteIndex = track.offsets.active; noteIndex < track.offsets.on; ++noteIndex) {
+                        const note = track.notes[noteIndex];
+                        const offset = currentTime - note.time;
+                        const theta = 2 * Math.PI * note.midi * circleFactor / 12;
+                        const dx = scale * (-offset + 0.5 * note.duration) * Math.cos(theta);
+                        const dy = scale * (-offset + 0.5 * note.duration) * Math.sin(theta);
+                        const sw = scale * note.duration;
+                        const sh = scale * note.duration;
+
+                        if (offset < note.duration) {
+                            // ワールド兼射影行列の設定
+                            gl.uniformMatrix4fv(
+                                matrixUniform, false,
+                                orthoTranslateScaleMatrix(
+                                    sw, sh, 1,
+                                    dx, dy, 0,
+                                    width, height,
+                                ),
+                            );
+                            gl.drawArrays(
+                                gl.TRIANGLE_STRIP,
+                                0,  // vertex offset
+                                4,  // a number of vertices
+                            );
+                        }
+                    }
+
+                    // 色の設定（アクティブ）
+                    gl.uniform4fv(
+                        colorUniform,
+                        trackColors[trackIndex % trackColors.length],
+                    );
+                    for (let noteIndex = track.offsets.active - 1; noteIndex >= track.offsets.off; --noteIndex) {
+                        const note = track.notes[noteIndex];
+                        const offset = currentTime - note.time;
+                        const theta = 2 * Math.PI * note.midi * circleFactor / 12;
+                        const dx = scale * (-offset + 0.5 * note.duration) * Math.cos(theta);
+                        const dy = scale * (-offset + 0.5 * note.duration) * Math.sin(theta);
+                        const sw = scale * note.duration;
+                        const sh = scale * note.duration;
+
+                        if (offset < note.duration) {
+                            // ワールド兼射影行列の設定
+                            gl.uniformMatrix4fv(
+                                matrixUniform, false,
+                                orthoTranslateScaleMatrix(
+                                    sw, sh, 1,
+                                    dx, dy, 0,
+                                    width, height,
+                                ),
+                            );
+                            gl.drawArrays(
+                                gl.TRIANGLE_STRIP,
+                                0,  // vertex offset
+                                4,  // a number of vertices
+                            );
+                        }
                     }
                 }
             }
