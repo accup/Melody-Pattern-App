@@ -30,16 +30,17 @@ const fsSource = `
     }
 `;
 
+
+const orthoMatrix = new Float32Array(16);
 function orthoTranslateScaleMatrix(sx, sy, sz, dx, dy, dz, vw, vh) {
-    const matrix = new Float32Array(16);
-    matrix[0] = 2 * sx / vw; // 11
-    matrix[5] = 2 * sy / vh; // 22
-    matrix[10] = -sz;        // 33
-    matrix[12] = 2 * dx / vw; // 14
-    matrix[13] = 2 * dy / vh; // 24
-    matrix[14] = -dz;        // 34
-    matrix[15] = 1;          // 44
-    return matrix;
+    orthoMatrix[0] = 2 * sx / vw;  // 11
+    orthoMatrix[5] = 2 * sy / vh;  // 22
+    orthoMatrix[10] = -sz;         // 33
+    orthoMatrix[12] = 2 * dx / vw; // 14
+    orthoMatrix[13] = 2 * dy / vh; // 24
+    orthoMatrix[14] = -dz;         // 34
+    orthoMatrix[15] = 1;           // 44
+    return orthoMatrix;
 }
 
 /**
@@ -157,15 +158,15 @@ function initButtonGroup(element, listener) {
 }
 
 
-const deactivatedColor = [0.5, 0.5, 0.5, 0.1];
+const deactivatedColor = new Float32Array([0.7, 0.7, 0.7, 0.2]);
 const trackColors = [
-    [0.5, 1.0, 0.5, 0.2],
-    [0.5, 0.5, 1.0, 0.2],
-    [1.0, 0.5, 0.5, 0.2],
-    [0.5, 1.0, 1.0, 0.2],
-    [0.8, 0.5, 0.5, 0.2],
-    [1.0, 0.5, 1.0, 0.2],
-    [1.0, 1.0, 0.5, 0.2],
+    new Float32Array([0.5, 1.0, 0.5, 0.4]),
+    new Float32Array([0.5, 0.5, 1.0, 0.4]),
+    new Float32Array([1.0, 0.5, 0.5, 0.4]),
+    new Float32Array([0.5, 1.0, 1.0, 0.4]),
+    new Float32Array([0.7, 0.5, 0.5, 0.4]),
+    new Float32Array([1.0, 0.5, 1.0, 0.4]),
+    new Float32Array([1.0, 1.0, 0.5, 0.4]),
 ];
 
 
@@ -179,6 +180,7 @@ window.addEventListener('load', e => {
     const playButton = document.getElementById('play-button');
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
 
+    const volume = new Tone.Volume(-12).toDestination();
     let midi = null;
     let duration = 1.0;
     let tracks = [];
@@ -195,25 +197,41 @@ window.addEventListener('load', e => {
             Tone.Transport.cancel();
 
             tracks.forEach(track => {
-                track.volume.disconnect();
                 track.synth.disconnect();
             });
             tracks = [];
 
             midi.tracks.forEach(track => {
-                const volume = new Tone.Volume(-12).toDestination();
-                const synth = new Tone.PolySynth({
-                    // maxPolyphony: 100,
-                    voice: Tone.Synth,
-                    options: {
-                        envelope: {
-                            attack: 0.02,
-                            decay: 0.1,
-                            sustain: 0.3,
-                            release: 0.8,
+                let synth;
+                if (track.instrument.percussion) {
+                    synth = new Tone.PolySynth({
+                        maxPolyphony: 100,
+                        voice: Tone.Synth,
+                        options: {
+                            envelope: {
+                                attack: 0.001,
+                                decay: 0.0,
+                                sustain: 1.0,
+                                release: 0.5,
+                                releaseCurve: "exponential",
+                            },
                         },
-                    },
-                }).connect(volume);
+                    });
+                } else {
+                    synth = new Tone.PolySynth({
+                        maxPolyphony: 100,
+                        voice: Tone.Synth,
+                        options: {
+                            envelope: {
+                                attack: 0.02,
+                                decay: 0.1,
+                                sustain: 0.3,
+                                release: 0.8,
+                            },
+                        },
+                    });
+                }
+                synth.connect(volume);
 
                 const part = new Tone.Part((time, note) => {
                     synth.triggerAttackRelease(
@@ -230,10 +248,10 @@ window.addEventListener('load', e => {
 
                 tracks.push({
                     channel: track.channel,
-                    volume: volume,
                     synth: synth,
                     part: part,
                     notes: notes,
+                    percussion: track.instrument.percussion,
                     offsets: {
                         off: 0,
                         on: 0,
@@ -248,6 +266,7 @@ window.addEventListener('load', e => {
             function init() {
                 tracks.forEach(track => {
                     track.offsets.off = 0;
+                    track.offsets.active = 0;
                     track.offsets.on = 0;
                 });
             }
@@ -319,7 +338,7 @@ window.addEventListener('load', e => {
         // アルファブレンドを有効化
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        // 塗りつぶし色を黒に設定
+        // 塗りつぶし色を設定
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
         const matrixUniform = gl.getUniformLocation(glinfo.shader, 'uMatrix');
@@ -395,7 +414,7 @@ window.addEventListener('load', e => {
                     break;
             }
 
-            // 画面を黒に塗りつぶし
+            // 画面を塗りつぶし
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             // 必要なノートの描画
@@ -407,12 +426,12 @@ window.addEventListener('load', e => {
                     const note = track.notes[track.offsets.off];
                     if (currentTime < note.time + note.duration) break;
                 }
-                track.offsets.active = track.offsets.off;
+                track.offsets.active = Math.max(track.offsets.active, track.offsets.off);
                 for (; track.offsets.active < noteLength; ++track.offsets.active) {
                     const note = track.notes[track.offsets.active];
                     if (currentTime < note.time) break;
                 }
-                track.offsets.on = track.offsets.active;
+                track.offsets.on = Math.max(track.offsets.on, track.offsets.active);
                 for (; track.offsets.on < noteLength; ++track.offsets.on) {
                     const note = track.notes[track.offsets.on];
                     if (currentTime < note.time - 3) break;
