@@ -1,3 +1,5 @@
+import { binarySearch } from './modules/binarySearch.js';
+
 // 頂点シェーダ（頂点）
 const vsSource = `
     attribute vec4 aVertexPosition;
@@ -185,6 +187,27 @@ window.addEventListener('load', e => {
         mode: '12 semitones',
     };
 
+    function secondsToTicks(seconds) {
+        if (midi === null) return 0;
+        return midi.header.secondsToTicks(seconds);
+    }
+    /**
+     * 拍子記号を基点として不足分の小節位置を繰り上げる
+     * @param {number} ticks
+     */
+    function ticksToFixedMeasures(ticks) {
+        if (midi === null) return 0;
+        const measures = midi.header.ticksToMeasures(ticks);
+
+        if (midi.header.timeSignatures.length === 0) return measures;
+
+        let index = binarySearch(midi.header.timeSignatures, ticks, event => event.ticks);
+        const event = midi.header.timeSignatures[index];
+        const lackedMeasures = 1.0 - event.measures % 1.0;
+
+        return measures + lackedMeasures;
+    }
+
     function loadFile(file) {
         file.arrayBuffer().then(buffer => {
             fileNameDiv.textContent = file.name;
@@ -245,7 +268,17 @@ window.addEventListener('load', e => {
                 }, track.notes);
                 part.start(0);
 
-                const notes = Array.from(track.notes);
+                const notes = track.notes.map(note => ({
+                    midi: note.midi,
+                    time: note.time,
+                    ticks: note.ticks,
+                    name: note.name,
+                    pitch: note.pitch,
+                    octave: note.octave,
+                    velocity: note.velocity,
+                    duration: note.duration,
+                    measures: ticksToFixedMeasures(note.ticks),
+                }));
                 notes.sort((a, b) => a.time - b.time);
 
                 tracks.push({
@@ -395,6 +428,7 @@ window.addEventListener('load', e => {
             const height = gl.canvas.height;
 
             const currentTime = Tone.Transport.seconds;
+            const currentMeasures = ticksToFixedMeasures(secondsToTicks(currentTime));
             const scale = 200;
             const onTime = 3.0;
             const percussionX = 0.05 * width;
@@ -404,7 +438,6 @@ window.addEventListener('load', e => {
             const percussionDeactivateScale = 20;
             const percussionOnTime = 0.8;
             const percussionDuration = 0.0625;
-            const percussionPeriod = 1.0;
 
             let circleFactor;
             switch (state.mode) {
@@ -427,6 +460,38 @@ window.addEventListener('load', e => {
 
             // 画面を塗りつぶし
             gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // 小節位置の描画
+            {
+                // 色の設定（非アクティブ）
+                gl.uniform4fv(
+                    colorUniform,
+                    deactivatedColor,
+                );
+                {
+                    // 現在の時刻位置に描画
+                    const theta = currentMeasures % 1.0;
+                    const dx = percussionX + percussionW * theta;
+                    const dy = percussionY;
+                    const sw = percussionDeactivateScale;
+                    const sh = percussionDeactivateScale;
+
+                    // ワールド兼射影行列の設定
+                    gl.uniformMatrix4fv(
+                        matrixUniform, false,
+                        orthoTranslateScaleMatrix(
+                            sw, sh, 1,
+                            dx, dy, 0,
+                            width, height,
+                        ),
+                    );
+                    gl.drawArrays(
+                        gl.TRIANGLE_STRIP,
+                        0,  // vertex offset
+                        4,  // a number of vertices
+                    );
+                }
+            }
 
             // 必要なノートの描画
             const trackLength = tracks.length;
@@ -470,8 +535,8 @@ window.addEventListener('load', e => {
                     );
                     for (let noteIndex = track.offsets.active; noteIndex < track.offsets.on; ++noteIndex) {
                         const note = track.notes[noteIndex];
-                        const offset = currentTime - note.time;
-                        const theta = (note.time / percussionPeriod) % 1.0;
+                        const offset = currentMeasures - note.measures;
+                        const theta = note.measures % 1.0;
                         const dx = percussionX + percussionW * theta;
                         const dy = percussionY;
                         const sw = percussionDeactivateScale;
@@ -499,49 +564,17 @@ window.addEventListener('load', e => {
                         colorUniform,
                         trackColors[trackIndex % trackColors.length],
                     );
-                    let isActive = false;
                     for (let noteIndex = track.offsets.active - 1; noteIndex >= track.offsets.off; --noteIndex) {
                         const note = track.notes[noteIndex];
-                        const offset = currentTime - note.time;
+                        const offset = currentMeasures - note.measures;
                         // 現在の時刻位置に描画
-                        const theta = (currentTime / percussionPeriod) % 1.0;
+                        const theta = currentMeasures % 1.0;
                         const dx = percussionX + percussionW * theta;
                         const dy = percussionY;
                         const sw = percussionScale * note.velocity;
                         const sh = percussionScale * note.velocity;
 
                         if (offset < percussionDuration) {
-                            // ワールド兼射影行列の設定
-                            gl.uniformMatrix4fv(
-                                matrixUniform, false,
-                                orthoTranslateScaleMatrix(
-                                    sw, sh, 1,
-                                    dx, dy, 0,
-                                    width, height,
-                                ),
-                            );
-                            gl.drawArrays(
-                                gl.TRIANGLE_STRIP,
-                                0,  // vertex offset
-                                4,  // a number of vertices
-                            );
-                            isActive = true;
-                        }
-                    }
-                    if (!isActive) {
-                        // 色の設定（非アクティブ）
-                        gl.uniform4fv(
-                            colorUniform,
-                            deactivatedColor,
-                        );
-                        {
-                            // 現在の時刻位置に描画
-                            const theta = (currentTime / percussionPeriod) % 1.0;
-                            const dx = percussionX + percussionW * theta;
-                            const dy = percussionY;
-                            const sw = percussionDeactivateScale;
-                            const sh = percussionDeactivateScale;
-
                             // ワールド兼射影行列の設定
                             gl.uniformMatrix4fv(
                                 matrixUniform, false,
