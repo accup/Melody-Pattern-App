@@ -178,6 +178,9 @@ window.addEventListener('load', e => {
     const fileNameDiv = document.getElementById('file-name-div');
     const homeButton = document.getElementById('home-button');
     const playButton = document.getElementById('play-button');
+    const keyDiv = document.getElementById('key-div');
+    const upKeyButton = document.getElementById('up-key-button');
+    const downKeyButton = document.getElementById('down-key-button');
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
     const changeRenderingModeButtonGroup = document.getElementById('change-rendering-mode-button-group');
 
@@ -189,6 +192,8 @@ window.addEventListener('load', e => {
     let state = {
         mode: '12 semitones',
         rendering: 'inward',
+        key: 0,
+        scale: 200.0,
     };
 
     function resetTrackStates() {
@@ -197,6 +202,20 @@ window.addEventListener('load', e => {
             track.offsets.active = 0;
             track.offsets.on = 0;
         });
+    }
+    function updateKey() {
+        tracks.forEach(track => {
+            if (!track.percussion) {
+                track.synth.set({ 'detune': state.key * 100 });
+            }
+        });
+        if (state.key > 0) {
+            keyDiv.textContent = '+' + state.key;
+        } else if (state.key == 0) {
+            keyDiv.textContent = '±' + state.key;
+        } else if (state.key < 0) {
+            keyDiv.textContent = '' + state.key;
+        }
     }
 
 
@@ -309,6 +328,7 @@ window.addEventListener('load', e => {
             });
 
             duration = Math.max(1.0, midi.duration);
+            updateKey();
 
             // Initialization
             Tone.Transport.schedule(resetTrackStates, 0);
@@ -377,11 +397,31 @@ window.addEventListener('load', e => {
         }
     });
 
+    downKeyButton.addEventListener('click', e => {
+        --state.key;
+        updateKey();
+    });
+    upKeyButton.addEventListener('click', e => {
+        ++state.key;
+        updateKey();
+    });
+    updateKey();
+
     initButtonGroup(changeCircleModeButtonGroup, value => {
         state.mode = value;
     });
     initButtonGroup(changeRenderingModeButtonGroup, value => {
         state.rendering = value;
+    });
+
+    melodyPanelCanvas.addEventListener('wheel', e => {
+        if (e.deltaY > 0) {
+            if (state.scale > 37) {
+                state.scale -= 25;
+            }
+        } else if (e.deltaY < 0) {
+            state.scale += 25;
+        }
     });
 
     const glinfo = initWebGL(melodyPanelCanvas);
@@ -475,6 +515,8 @@ window.addEventListener('load', e => {
             const percussionDeactivateScale = 20;
             const percussionOnTime = 0.8;
             const percussionDuration = 0.0625;
+            const key = state.key;
+            const scale = state.scale;
 
             let circleFactor;
             switch (state.mode) {
@@ -494,21 +536,21 @@ window.addEventListener('load', e => {
                     circleFactor = 7;
                     break;
             }
+            function calculateTheta(midi) {
+                return 2 * Math.PI * (midi + key - 72) * circleFactor / 12;
+            }
 
-            let scale;
             let onTime;
             let calculateViewOffset;
             switch (state.rendering) {
                 case 'inward':
-                    scale = 200;
-                    onTime = 3.0;
+                    onTime = 600.0 / Math.max(1.0, scale);
                     calculateViewOffset = function (time, duration) {
                         return (time - currentTime) + 0.5 * duration;
                     };
                     break;
                 case 'outward':
-                    scale = 100;
-                    onTime = 2.0;
+                    onTime = 400.0 / Math.max(1.0, scale);
                     calculateViewOffset = function (time, duration) {
                         return (onTime - (time - currentTime)) - 0.5 * duration;
                     };
@@ -658,7 +700,7 @@ window.addEventListener('load', e => {
                         const note = track.notes[noteIndex];
                         const offset = currentTime - note.time;
                         const viewOffset = calculateViewOffset(note.time, note.duration)
-                        const theta = 2 * Math.PI * note.midi * circleFactor / 12;
+                        const theta = calculateTheta(note.midi);
                         const dx = scale * viewOffset * Math.cos(theta);
                         const dy = scale * viewOffset * Math.sin(theta);
                         const sw = scale * note.duration;
@@ -691,7 +733,7 @@ window.addEventListener('load', e => {
                         const note = track.notes[noteIndex];
                         const offset = currentTime - note.time;
                         const viewOffset = calculateViewOffset(note.time, note.duration)
-                        const theta = 2 * Math.PI * note.midi * circleFactor / 12;
+                        const theta = calculateTheta(note.midi);
                         const dx = scale * viewOffset * Math.cos(theta);
                         const dy = scale * viewOffset * Math.sin(theta);
                         const sw = scale * note.duration;

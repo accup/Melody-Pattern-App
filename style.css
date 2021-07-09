@@ -74,6 +74,69 @@ label#midi-file-drop-label > span {
     display: none;
 }
 
+#change-key-div {
+    display: inline-block;
+
+    color: white;
+    font-size: 1.0em;
+}
+
+/* #change-key-div > */
+#key-div {
+    display: inline-block;
+
+    text-align: right;
+    width: 2.0em;
+}
+
+/* #change-key-div > */
+#up-key-button, #down-key-button {
+    margin: 0;
+    padding: 0.2em 0.5em;
+    border: 1px solid white;
+    border-radius: 5px;
+    background-color: transparent;
+    color: white;
+    font-size: 16px;
+
+    vertical-align: middle;
+}
+
+#down-key-button::before {
+    content: "";
+    display: inline-block;
+
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    width: 0.625em;
+    height: 0;
+    border-top: 0.125em solid white;
+    vertical-align: middle;
+}
+
+#up-key-button::before {
+    content: "";
+    display: inline-block;
+
+    margin-left: 0.25em;
+    margin-right: -0.375em;
+    width: 0;
+    height: 0.625em;
+    border-right: 0.125em solid white;
+    vertical-align: middle;
+}
+#up-key-button::after {
+    content: "";
+    display: inline-block;
+
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    width: 0.625em;
+    height: 0;
+    border-top: 0.125em solid white;
+    vertical-align: middle;
+}
+
 /* #device-and-music-data-panel > */
 #home-button, #play-button {
     padding: 0.2em 0.5em;
