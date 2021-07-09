@@ -181,6 +181,9 @@ window.addEventListener('load', e => {
     const keyDiv = document.getElementById('key-div');
     const upKeyButton = document.getElementById('up-key-button');
     const downKeyButton = document.getElementById('down-key-button');
+    const magnificationDiv = document.getElementById('magnification-div');
+    const upMagnificationButton = document.getElementById('up-magnification-button');
+    const downMagnificationButton = document.getElementById('down-magnification-button');
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
     const changeRenderingModeButtonGroup = document.getElementById('change-rendering-mode-button-group');
 
@@ -193,7 +196,7 @@ window.addEventListener('load', e => {
         mode: '12 semitones',
         rendering: 'inward',
         key: 0,
-        scale: 200.0,
+        magnification: 200.0,
     };
 
     function resetTrackStates() {
@@ -217,7 +220,9 @@ window.addEventListener('load', e => {
             keyDiv.textContent = '' + state.key;
         }
     }
-
+    function updateMagnification() {
+        magnificationDiv.textContent = state.magnification + '%';
+    }
 
     function secondsToTicks(seconds) {
         if (midi === null) return 0;
@@ -407,21 +412,33 @@ window.addEventListener('load', e => {
     });
     updateKey();
 
+    melodyPanelCanvas.addEventListener('wheel', e => {
+        if (e.deltaY > 0) {
+            if (state.magnification > 37) {
+                state.magnification -= 25;
+            }
+        } else if (e.deltaY < 0) {
+            state.magnification += 25;
+        }
+        updateMagnification();
+    });
+    downMagnificationButton.addEventListener('click', e => {
+        if (state.magnification > 37) {
+            state.magnification -= 25;
+        }
+        updateMagnification();
+    });
+    upMagnificationButton.addEventListener('click', e => {
+        state.magnification += 25;
+        updateMagnification();
+    });
+    updateMagnification();
+
     initButtonGroup(changeCircleModeButtonGroup, value => {
         state.mode = value;
     });
     initButtonGroup(changeRenderingModeButtonGroup, value => {
         state.rendering = value;
-    });
-
-    melodyPanelCanvas.addEventListener('wheel', e => {
-        if (e.deltaY > 0) {
-            if (state.scale > 37) {
-                state.scale -= 25;
-            }
-        } else if (e.deltaY < 0) {
-            state.scale += 25;
-        }
     });
 
     const glinfo = initWebGL(melodyPanelCanvas);
@@ -511,12 +528,12 @@ window.addEventListener('load', e => {
             const percussionX = 0.05 * width;
             const percussionY = 0.4 * height;
             const percussionW = 0.4 * width;
-            const percussionScale = 50;
-            const percussionDeactivateScale = 20;
+            const percussionMagnification = 50;
+            const percussionDeactivateMagnification = 20;
             const percussionOnTime = 0.8;
             const percussionDuration = 0.0625;
             const key = state.key;
-            const scale = state.scale;
+            const magnification = state.magnification;
 
             let circleFactor;
             switch (state.mode) {
@@ -532,6 +549,9 @@ window.addEventListener('load', e => {
                 case '96 semitones':
                     circleFactor = 0.125;
                     break;
+                case '192 semitones':
+                    circleFactor = 0.0625;
+                    break;
                 case 'circle of fifths':
                     circleFactor = 7;
                     break;
@@ -544,13 +564,13 @@ window.addEventListener('load', e => {
             let calculateViewOffset;
             switch (state.rendering) {
                 case 'inward':
-                    onTime = 600.0 / Math.max(1.0, scale);
+                    onTime = 600.0 / Math.max(1.0, magnification);
                     calculateViewOffset = function (time, duration) {
                         return (time - currentTime) + 0.5 * duration;
                     };
                     break;
                 case 'outward':
-                    onTime = 400.0 / Math.max(1.0, scale);
+                    onTime = 350.0 / Math.max(1.0, magnification);
                     calculateViewOffset = function (time, duration) {
                         return (onTime - (time - currentTime)) - 0.5 * duration;
                     };
@@ -572,8 +592,8 @@ window.addEventListener('load', e => {
                     const theta = currentMeasures % 1.0;
                     const dx = percussionX + percussionW * theta;
                     const dy = percussionY;
-                    const sw = percussionDeactivateScale;
-                    const sh = percussionDeactivateScale;
+                    const sw = percussionDeactivateMagnification;
+                    const sh = percussionDeactivateMagnification;
 
                     // ワールド兼射影行列の設定
                     gl.uniformMatrix4fv(
@@ -638,8 +658,8 @@ window.addEventListener('load', e => {
                         const theta = note.measures % 1.0;
                         const dx = percussionX + percussionW * theta;
                         const dy = percussionY;
-                        const sw = percussionDeactivateScale;
-                        const sh = percussionDeactivateScale;
+                        const sw = percussionDeactivateMagnification;
+                        const sh = percussionDeactivateMagnification;
 
                         if (offset < percussionDuration) {
                             // ワールド兼射影行列の設定
@@ -670,8 +690,8 @@ window.addEventListener('load', e => {
                         const theta = currentMeasures % 1.0;
                         const dx = percussionX + percussionW * theta;
                         const dy = percussionY;
-                        const sw = percussionScale * note.velocity;
-                        const sh = percussionScale * note.velocity;
+                        const sw = percussionMagnification * note.velocity;
+                        const sh = percussionMagnification * note.velocity;
 
                         if (offset < percussionDuration) {
                             // ワールド兼射影行列の設定
@@ -701,10 +721,10 @@ window.addEventListener('load', e => {
                         const offset = currentTime - note.time;
                         const viewOffset = calculateViewOffset(note.time, note.duration)
                         const theta = calculateTheta(note.midi);
-                        const dx = scale * viewOffset * Math.cos(theta);
-                        const dy = scale * viewOffset * Math.sin(theta);
-                        const sw = scale * note.duration;
-                        const sh = scale * note.duration;
+                        const dx = magnification * viewOffset * Math.cos(theta);
+                        const dy = magnification * viewOffset * Math.sin(theta);
+                        const sw = magnification * note.duration;
+                        const sh = magnification * note.duration;
 
                         if (offset < note.duration) {
                             // ワールド兼射影行列の設定
@@ -734,10 +754,10 @@ window.addEventListener('load', e => {
                         const offset = currentTime - note.time;
                         const viewOffset = calculateViewOffset(note.time, note.duration)
                         const theta = calculateTheta(note.midi);
-                        const dx = scale * viewOffset * Math.cos(theta);
-                        const dy = scale * viewOffset * Math.sin(theta);
-                        const sw = scale * note.duration;
-                        const sh = scale * note.duration;
+                        const dx = magnification * viewOffset * Math.cos(theta);
+                        const dy = magnification * viewOffset * Math.sin(theta);
+                        const sw = magnification * note.duration;
+                        const sh = magnification * note.duration;
 
                         if (offset < note.duration) {
                             // ワールド兼射影行列の設定
