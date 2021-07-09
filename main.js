@@ -153,6 +153,7 @@ function initButtonGroup(element, listener) {
         element.dataset.value = element.firstElementChild.dataset.value;
     }
     onChange();
+    listener(element.dataset.value);
 }
 
 
@@ -506,8 +507,8 @@ window.addEventListener('load', e => {
                     };
                     break;
                 case 'outward':
-                    scale = 200;
-                    onTime = 1.0;
+                    scale = 100;
+                    onTime = 2.0;
                     calculateViewOffset = function (time, duration) {
                         return (onTime - (time - currentTime)) - 0.5 * duration;
                     };
@@ -686,7 +687,7 @@ window.addEventListener('load', e => {
                         colorUniform,
                         trackColors[trackIndex % trackColors.length],
                     );
-                    for (let noteIndex = track.offsets.active - 1; noteIndex >= track.offsets.off; --noteIndex) {
+                    for (let noteIndex = track.offsets.off; noteIndex < track.offsets.active; ++noteIndex) {
                         const note = track.notes[noteIndex];
                         const offset = currentTime - note.time;
                         const viewOffset = calculateViewOffset(note.time, note.duration)
