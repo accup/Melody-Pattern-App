@@ -178,6 +178,7 @@ window.addEventListener('load', e => {
     const homeButton = document.getElementById('home-button');
     const playButton = document.getElementById('play-button');
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
+    const changeRenderingModeButtonGroup = document.getElementById('change-rendering-mode-button-group');
 
     const volume = new Tone.Volume(-12).toDestination();
     const percussionVolume = new Tone.Volume(-6).toDestination();
@@ -186,6 +187,7 @@ window.addEventListener('load', e => {
     let tracks = [];
     let state = {
         mode: '12 semitones',
+        rendering: 'inward',
     };
 
     function resetTrackStates() {
@@ -377,6 +379,9 @@ window.addEventListener('load', e => {
     initButtonGroup(changeCircleModeButtonGroup, value => {
         state.mode = value;
     });
+    initButtonGroup(changeRenderingModeButtonGroup, value => {
+        state.rendering = value;
+    });
 
     const glinfo = initWebGL(melodyPanelCanvas);
     if (glinfo === null) {
@@ -462,8 +467,6 @@ window.addEventListener('load', e => {
 
             const currentTime = Tone.Transport.seconds;
             const currentMeasures = ticksToFixedMeasures(secondsToTicks(currentTime));
-            const scale = 200;
-            const onTime = 3.0;
             const percussionX = 0.05 * width;
             const percussionY = 0.4 * height;
             const percussionW = 0.4 * width;
@@ -488,6 +491,26 @@ window.addEventListener('load', e => {
                     break;
                 case 'circle of fifths':
                     circleFactor = 7;
+                    break;
+            }
+
+            let scale;
+            let onTime;
+            let calculateViewOffset;
+            switch (state.rendering) {
+                case 'inward':
+                    scale = 200;
+                    onTime = 3.0;
+                    calculateViewOffset = function (time, duration) {
+                        return (time - currentTime) + 0.5 * duration;
+                    };
+                    break;
+                case 'outward':
+                    scale = 200;
+                    onTime = 1.0;
+                    calculateViewOffset = function (time, duration) {
+                        return (onTime - (time - currentTime)) - 0.5 * duration;
+                    };
                     break;
             }
 
@@ -633,9 +656,10 @@ window.addEventListener('load', e => {
                     for (let noteIndex = track.offsets.active; noteIndex < track.offsets.on; ++noteIndex) {
                         const note = track.notes[noteIndex];
                         const offset = currentTime - note.time;
+                        const viewOffset = calculateViewOffset(note.time, note.duration)
                         const theta = 2 * Math.PI * note.midi * circleFactor / 12;
-                        const dx = scale * (-offset + 0.5 * note.duration) * Math.cos(theta);
-                        const dy = scale * (-offset + 0.5 * note.duration) * Math.sin(theta);
+                        const dx = scale * viewOffset * Math.cos(theta);
+                        const dy = scale * viewOffset * Math.sin(theta);
                         const sw = scale * note.duration;
                         const sh = scale * note.duration;
 
@@ -665,9 +689,10 @@ window.addEventListener('load', e => {
                     for (let noteIndex = track.offsets.active - 1; noteIndex >= track.offsets.off; --noteIndex) {
                         const note = track.notes[noteIndex];
                         const offset = currentTime - note.time;
+                        const viewOffset = calculateViewOffset(note.time, note.duration)
                         const theta = 2 * Math.PI * note.midi * circleFactor / 12;
-                        const dx = scale * (-offset + 0.5 * note.duration) * Math.cos(theta);
-                        const dy = scale * (-offset + 0.5 * note.duration) * Math.sin(theta);
+                        const dx = scale * viewOffset * Math.cos(theta);
+                        const dy = scale * viewOffset * Math.sin(theta);
                         const sw = scale * note.duration;
                         const sh = scale * note.duration;
 
