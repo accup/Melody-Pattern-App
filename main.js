@@ -175,6 +175,7 @@ window.addEventListener('load', e => {
     const melodyPanelCanvas = document.getElementById('melody-panel-canvas');
     const midiFileDrop = document.getElementById('midi-file-drop');
     const fileNameDiv = document.getElementById('file-name-div');
+    const homeButton = document.getElementById('home-button');
     const playButton = document.getElementById('play-button');
     const changeCircleModeButtonGroup = document.getElementById('change-circle-mode-button-group');
 
@@ -186,6 +187,15 @@ window.addEventListener('load', e => {
     let state = {
         mode: '12 semitones',
     };
+
+    function resetTrackStates() {
+        tracks.forEach(track => {
+            track.offsets.off = 0;
+            track.offsets.active = 0;
+            track.offsets.on = 0;
+        });
+    }
+
 
     function secondsToTicks(seconds) {
         if (midi === null) return 0;
@@ -298,19 +308,14 @@ window.addEventListener('load', e => {
             duration = Math.max(1.0, midi.duration);
 
             // Initialization
-            function init() {
-                tracks.forEach(track => {
-                    track.offsets.off = 0;
-                    track.offsets.active = 0;
-                    track.offsets.on = 0;
-                });
-            }
-            Tone.Transport.schedule(init, 0);
+            Tone.Transport.schedule(resetTrackStates, 0);
             // Infinite Loop
             function replay() {
                 Tone.Transport.seconds = 0.0;
             }
             Tone.Transport.schedule(replay, duration);
+
+            playButton.classList.toggle('playing', false);
         });
     }
 
@@ -333,12 +338,40 @@ window.addEventListener('load', e => {
         const file = files[0];
         loadFile(file);
     });
+    homeButton.addEventListener('click', async e => {
+        await Tone.start();
+
+        resetTrackStates();
+        switch (Tone.Transport.state) {
+            case 'started':
+                Tone.Transport.stop();
+                Tone.Transport.start();
+                break;
+            case 'stopped':
+                Tone.Transport.stop();
+                break;
+            case 'paused':
+                Tone.Transport.stop();
+                break;
+        }
+    });
     playButton.addEventListener('click', async e => {
         await Tone.start();
-        if (Tone.Transport.state !== 'stopped') {
-            Tone.Transport.stop();
+
+        switch (Tone.Transport.state) {
+            case 'started':
+                Tone.Transport.pause();
+                playButton.classList.toggle('playing', false);
+                break;
+            case 'stopped':
+                Tone.Transport.start();
+                playButton.classList.toggle('playing', true);
+                break;
+            case 'paused':
+                Tone.Transport.start();
+                playButton.classList.toggle('playing', true);
+                break;
         }
-        Tone.Transport.start();
     });
 
     initButtonGroup(changeCircleModeButtonGroup, value => {
