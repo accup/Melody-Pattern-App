@@ -145,10 +145,10 @@ export class MelodyPatternRenderer {
          * ノート拡大率（パーセント）
          */
         this.noteMagnification = 100;
-        /**
-         * ノート発音相対発生時刻
-         */
-        this.noteAppearingTime = -3.0;
+        // /**
+        //  * ノート発音相対発生時刻
+        //  */
+        // this.noteAppearingTime = -3.0;
         /**
          * パーカッション拡大率（発音時・パーセント）
          */
@@ -326,13 +326,13 @@ export class MelodyPatternRenderer {
 
     /**
      * 
-     * @param {number} currentTime 
+     * @param {number} currentTime
+     * @param {number} appearingTime 
      */
-    updateNoteOffsets(currentTime) {
+    updateNoteOffsets(currentTime, appearingTime) {
         const offsets = this._noteOffsets;
         const events = this._score.notes;
         const length = events.length;
-        const appearingTime = this.noteAppearingTime;
 
         if (currentTime < this._lastNoteTime) {
             this.resetNoteOffsets();
@@ -361,12 +361,12 @@ export class MelodyPatternRenderer {
     /**
      * 
      * @param {number} currentTime 
+     * @param {number} appearingTime 
      */
-    updatePercussionOffsets(currentTime) {
+    updatePercussionOffsets(currentTime, appearingTime) {
         const offsets = this._percussionOffsets;
         const events = this._score.percussions;
         const length = events.length;
-        const appearingTime = this.percussionAppearingTime;
         const releasingTime = this.percussionReleasingTime;
 
         if (currentTime < this._lastPercussionTime) {
@@ -395,22 +395,23 @@ export class MelodyPatternRenderer {
 
     /**
      * 
+     * @param {number} currentTime 
      * @param {number} time 
      * @param {number} duration 
-     * @param {number} currentTime 
      */
-    _calculateInwardViewOffset(time, duration, currentTime) {
+    _calculateInwardViewOffset(currentTime, time, duration) {
         return (time - currentTime) + 0.5 * duration;
     }
 
     /**
      * 
+     * @param {number} currentTime 
+     * @param {number} appearingTime 
      * @param {number} time 
      * @param {number} duration 
-     * @param {number} currentTime 
      */
-    _calculateOutwardViewOffset(time, duration, currentTime) {
-        return -((time + this.noteAppearingTime - currentTime) + 0.5 * duration);
+    _calculateOutwardViewOffset(currentTime, appearingTime, time, duration) {
+        return -((time + appearingTime - currentTime) + 0.5 * duration);
     }
 
     /**
@@ -444,24 +445,36 @@ export class MelodyPatternRenderer {
 
         const currentTime = this._vocal.currentTime;
         const currentMeasures = this._score.ticksToFixedMeasures(this._score.secondsToTicks(currentTime));
-        this.updateNoteOffsets(currentTime);
-        this.updatePercussionOffsets(currentTime);
 
         const noteMagnification = this.noteMagnification;
         const percussionX = 0.05 * width;
-        const percussionY = 0.4 * height;
+        const percussionY = 0.45 * height;
         const percussionW = 0.4 * width;
         const percussionAppearingMagnification = this.percussionAppearingMagnification;
         const percussionAttackingMagnification = this.percussionAttackingMagnification;
         const percussionReleasingTime = this.percussionReleasingTime;
 
+        const circleTime = 3.0 / Math.max(0.01, noteMagnification / 100);
+        const unitSize = 0.8 * Math.min(width, height) / circleTime;
+        let noteAppearingTime;
+        switch (this.noteDirection) {
+            case 'inward':
+                noteAppearingTime = -circleTime * 6 / 7;
+                break;
+            case 'outward':
+                noteAppearingTime = -circleTime * 0.5;
+                break;
+        }
+        this.updateNoteOffsets(currentTime, noteAppearingTime);
+        this.updatePercussionOffsets(currentTime, this.percussionAppearingTime);
+
         let calculateViewOffset;
         switch (this.noteDirection) {
             case 'inward':
-                calculateViewOffset = this._calculateInwardViewOffset.bind(this);
+                calculateViewOffset = this._calculateInwardViewOffset.bind(this, currentTime);
                 break;
             case 'outward':
-                calculateViewOffset = this._calculateOutwardViewOffset.bind(this);
+                calculateViewOffset = this._calculateOutwardViewOffset.bind(this, currentTime, noteAppearingTime);
                 break;
         }
 
@@ -474,12 +487,12 @@ export class MelodyPatternRenderer {
         for (let noteIndex = noteOffsets.attacked; noteIndex < noteOffsets.appeared; ++noteIndex) {
             const note = score.notes[noteIndex];
             const offset = currentTime - note.time;
-            const viewOffset = calculateViewOffset(note.time, note.duration, currentTime)
+            const viewOffset = calculateViewOffset(note.time, note.duration)
             const theta = this._calculateTheta(note.midi);
-            const dx = noteMagnification * viewOffset * Math.cos(theta);
-            const dy = noteMagnification * viewOffset * Math.sin(theta);
-            const sw = noteMagnification * note.duration;
-            const sh = noteMagnification * note.duration;
+            const dx = unitSize * viewOffset * Math.cos(theta);
+            const dy = unitSize * viewOffset * Math.sin(theta);
+            const sw = unitSize * note.duration;
+            const sh = unitSize * note.duration;
 
             if (offset < note.duration) {
                 // ワールド兼射影行列の設定
@@ -502,12 +515,12 @@ export class MelodyPatternRenderer {
         for (let noteIndex = noteOffsets.released; noteIndex < noteOffsets.attacked; ++noteIndex) {
             const note = score.notes[noteIndex];
             const offset = currentTime - note.time;
-            const viewOffset = calculateViewOffset(note.time, note.duration, currentTime)
+            const viewOffset = calculateViewOffset(note.time, note.duration)
             const theta = this._calculateTheta(note.midi);
-            const dx = noteMagnification * viewOffset * Math.cos(theta);
-            const dy = noteMagnification * viewOffset * Math.sin(theta);
-            const sw = noteMagnification * note.duration;
-            const sh = noteMagnification * note.duration;
+            const dx = unitSize * viewOffset * Math.cos(theta);
+            const dy = unitSize * viewOffset * Math.sin(theta);
+            const sw = unitSize * note.duration;
+            const sh = unitSize * note.duration;
 
             if (offset < note.duration) {
                 // 色の設定（発音時）

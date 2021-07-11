@@ -25,17 +25,6 @@ window.addEventListener('load', e => {
     try {
         const renderer = new MelodyPatternRenderer(vocal, melodyPanelCanvas);
 
-        function updateNoteAppearingTime() {
-            switch (renderer.noteDirection) {
-                case 'inward':
-                    renderer.noteAppearingTime = -600 / Math.max(1.0, renderer.noteMagnification);
-                    break;
-                case 'outward':
-                    renderer.noteAppearingTime = -350 / Math.max(1.0, renderer.noteMagnification);
-                    break;
-            }
-        }
-
         function updateKey() {
             const key = vocal.key;
             if (key > 0) {
@@ -109,22 +98,18 @@ window.addEventListener('load', e => {
                 renderer.noteMagnification += 25;
             }
             updateToneMagnification();
-            updateNoteAppearingTime();
         }, { passive: false });
         downMagnificationButton.addEventListener('click', e => {
             if (renderer.noteMagnification > 37) {
                 renderer.noteMagnification -= 25;
             }
             updateToneMagnification();
-            updateNoteAppearingTime();
         });
         upMagnificationButton.addEventListener('click', e => {
             renderer.noteMagnification += 25;
             updateToneMagnification();
-            updateNoteAppearingTime();
         });
         updateToneMagnification();
-        updateNoteAppearingTime();
 
         initButtonGroup(changeCircleModeButtonGroup, value => {
             switch (value) {
@@ -156,7 +141,6 @@ window.addEventListener('load', e => {
         });
         initButtonGroup(changeRenderingModeButtonGroup, value => {
             renderer.noteDirection = value;
-            updateNoteAppearingTime();
         });
 
         requestAnimationFrame(function renderingLoop() {

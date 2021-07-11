@@ -6,17 +6,26 @@
     right: 0;
 
     background-color: black;
+
+    display: flex;
+    flex-direction: column;
+    /* justify-content: space-between; */
+}
+
+#device-and-music-data-panel {
+    flex: 0 0 auto;
 }
 
 #melody-panel {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-
+    flex: 1 0 0px;
+    
+    position: relative;
     overflow: hidden;
     isolation: isolate;
+}
+
+#tool-panel {
+    flex: 0 0 auto;
 }
 
 /* #melody-panel > */
@@ -26,18 +35,6 @@
     bottom: 0;
     width: 100%;
     height: 100%;
-}
-
-#tool-panel {
-    position: absolute;
-    top: 0;
-    right: 0;
-}
-
-#device-and-music-data-panel {
-    position: absolute;
-    top: 0;
-    left: 0;
 }
 
 /* #device-and-music-data-panel > */
