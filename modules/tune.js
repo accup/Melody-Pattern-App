@@ -95,8 +95,8 @@ export class Score {
         this.notes = this.tracks.filter(track => !track.instrument.percussion).flatMap(track => track.notes);
         this.percussions = this.tracks.filter(track => track.instrument.percussion).flatMap(track => track.notes);
 
-        this.notes.sort((a, b) => a.time - b.time);
-        this.percussions.sort((a, b) => a.time - b.time);
+        this.notes.sort((a, b) => (a.time === b.time) ? (b.duration - a.duration) : (a.time - b.time));
+        this.percussions.sort((a, b) => (a.time === b.time) ? (b.duration - a.duration) : (a.time - b.time));
     }
 
     /**
