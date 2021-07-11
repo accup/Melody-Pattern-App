@@ -1,3 +1,137 @@
+
+.button-group {
+    width: max-content;
+    overflow: visible;
+
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.button-group > .button-group-item {
+    flex: 0 0 auto;
+
+    padding: 0.2em 0.5em;
+    cursor: default;
+
+    color: white;
+    background-color: gray;
+
+    z-index: 0;
+}
+
+.button-group > .button-group-item:first-child {
+    border-radius: 4px 0 0 4px;
+}
+.button-group > .button-group-item:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.button-group > .button-group-item.selected {
+    color: black;
+    background-color: white;
+    margin: -1px;
+    border: 1px solid white;
+    box-shadow: 0 0 3px black;
+
+    font-weight: 600;
+
+    z-index: 1;
+}
+
+.ui-button {
+    padding: 5px 9px;
+    border: 1px solid white;
+    border-radius: 5px;
+    background-color: transparent;
+    color: white;
+    height: 30px;
+
+    vertical-align: middle;
+}
+
+.ui-button.ui-button-minus::before {
+    content: "";
+    display: inline-block;
+
+    margin-top: 3px;
+    margin-bottom: 5px;
+    width: 10px;
+    height: 0;
+    border-top: 2px solid white;
+    vertical-align: middle;
+}
+
+.ui-button.ui-button-plus::before {
+    content: "";
+    display: inline-block;
+
+    margin-top: -2px;
+    margin-left: 4px;
+    margin-right: -6px;
+    width: 0;
+    height: 10px;
+    border-right: 2px solid white;
+    vertical-align: middle;
+}
+.ui-button.ui-button-plus::after {
+    content: "";
+    display: inline-block;
+
+    margin-top: 3px;
+    margin-bottom: 5px;
+    width: 10px;
+    height: 0;
+    border-top: 2px solid white;
+    vertical-align: middle;
+}
+
+.ui-button.ui-button-return-to-top::before {
+    content: "";
+    display: inline-block;
+
+    margin-right: 1px;
+    height: 10px;
+    border-left: 0;
+    border-right: 2px solid white;
+    border-top: 0;
+    border-bottom: 0;
+}
+.ui-button.ui-button-return-to-top::after {
+    content: "";
+
+    display: inline-block;
+    height: 0;
+    border-left: 0;
+    border-right: 7px solid white;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+
+.ui-button.ui-button-play::before {
+    content: "";
+
+    display: inline-block;
+    height: 0;
+    padding-right: 0;
+    border-left: 10px solid white;
+    border-right: none;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+.ui-button.ui-button-play.playing::before {
+    content: "";
+
+    display: inline-block;
+    height: 10px;
+    padding-right: 3.2px;
+    border-left: 3.4px solid white;
+    border-right: 3.4px solid white;
+    border-top: none;
+    border-bottom: none;
+}
+
 #app {
     position: absolute;
     top: 0;
@@ -93,54 +227,6 @@ label#midi-file-drop-label > span {
     width: 2.0em;
 }
 
-/* #change-key-div > */
-#up-key-button, #down-key-button {
-    margin: 0;
-    padding: 0.2em 0.5em;
-    border: 1px solid white;
-    border-radius: 5px;
-    background-color: transparent;
-    color: white;
-    font-size: 16px;
-
-    vertical-align: middle;
-}
-
-#down-key-button::before {
-    content: "";
-    display: inline-block;
-
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-    width: 0.625em;
-    height: 0;
-    border-top: 0.125em solid white;
-    vertical-align: middle;
-}
-
-#up-key-button::before {
-    content: "";
-    display: inline-block;
-
-    margin-left: 0.25em;
-    margin-right: -0.375em;
-    width: 0;
-    height: 0.625em;
-    border-right: 0.125em solid white;
-    vertical-align: middle;
-}
-#up-key-button::after {
-    content: "";
-    display: inline-block;
-
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-    width: 0.625em;
-    height: 0;
-    border-top: 0.125em solid white;
-    vertical-align: middle;
-}
-
 #change-magnification-div {
     display: inline-block;
 
@@ -157,119 +243,6 @@ label#midi-file-drop-label > span {
     width: 3.0em;
 }
 
-/* #change-magnification-div > */
-#up-magnification-button, #down-magnification-button {
-    margin: 0;
-    padding: 0.2em 0.5em;
-    border: 1px solid white;
-    border-radius: 5px;
-    background-color: transparent;
-    color: white;
-    font-size: 16px;
-
-    vertical-align: middle;
-}
-
-#down-magnification-button::before {
-    content: "";
-    display: inline-block;
-
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-    width: 0.625em;
-    height: 0;
-    border-top: 0.125em solid white;
-    vertical-align: middle;
-}
-
-#up-magnification-button::before {
-    content: "";
-    display: inline-block;
-
-    margin-left: 0.25em;
-    margin-right: -0.375em;
-    width: 0;
-    height: 0.625em;
-    border-right: 0.125em solid white;
-    vertical-align: middle;
-}
-#up-magnification-button::after {
-    content: "";
-    display: inline-block;
-
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
-    width: 0.625em;
-    height: 0;
-    border-top: 0.125em solid white;
-    vertical-align: middle;
-}
-
-/* #device-and-music-data-panel > */
-#home-button, #play-button {
-    padding: 0.2em 0.5em;
-    border: 1px solid white;
-    border-radius: 5px;
-    background-color: transparent;
-    color: white;
-    font-size: 16px;
-
-    vertical-align: middle;
-}
-#home-button {
-    margin-left: 0.5em;
-    margin-right: 0;
-}
-#play-button {
-    margin-left: 0;
-    margin-right: 0.1em;
-}
-
-#home-button::before {
-    content: "";
-    margin-right: 0.1em;
-
-    display: inline-block;
-    height: 0.625em;
-    border-left: 0;
-    border-right: 0.15em solid white;
-    border-top: 0;
-    border-bottom: 0;
-}
-#home-button::after {
-    content: "";
-
-    display: inline-block;
-    height: 0;
-    border-left: 0;
-    border-right: 0.45em solid white;
-    border-top: 0.3125em solid transparent;
-    border-bottom: 0.3125em solid transparent;
-}
-
-#play-button::before {
-    content: "";
-
-    display: inline-block;
-    height: 0;
-    padding-right: 0;
-    border-left: 0.625em solid white;
-    border-right: none;
-    border-top: 0.3125em solid transparent;
-    border-bottom: 0.3125em solid transparent;
-}
-#play-button.playing::before {
-    content: "";
-
-    display: inline-block;
-    height: 0.625em;
-    padding-right: 0.2em;
-    border-left: 0.2125em solid white;
-    border-right: 0.2125em solid white;
-    border-top: none;
-    border-bottom: none;
-}
-
 #device-and-music-data-panel .button-group {
     margin: 1ex;
     font-size: 14px;
@@ -281,43 +254,11 @@ label#midi-file-drop-label > span {
     font-size: 14px;
 }
 
-.button-group {
-    width: max-content;
-    overflow: visible;
-
-    display: inline-flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
+#home-button {
+    margin-left: 0.5em;
+    margin-right: 0;
 }
-
-.button-group > .button-group-item {
-    flex: 0 0 auto;
-
-    padding: 0.2em 0.5em;
-    cursor: default;
-
-    color: white;
-    background-color: gray;
-
-    z-index: 0;
-}
-
-.button-group > .button-group-item:first-child {
-    border-radius: 4px 0 0 4px;
-}
-.button-group > .button-group-item:last-child {
-    border-radius: 0 4px 4px 0;
-}
-
-.button-group > .button-group-item.selected {
-    color: black;
-    background-color: white;
-    margin: -1px;
-    border: 1px solid white;
-    box-shadow: 0 0 3px black;
-
-    font-weight: 600;
-
-    z-index: 1;
+#play-button {
+    margin-left: 0;
+    margin-right: 0.1em;
 }
