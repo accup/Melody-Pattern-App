@@ -178,13 +178,13 @@ export class MelodyPatternRenderer {
          * ノート・パーカッションの色配列（発音時）
          */
         this.attackingColors = [
-            new Float32Array([0.5, 1.0, 0.5, 0.5]),
-            new Float32Array([0.5, 0.5, 1.0, 0.5]),
-            new Float32Array([1.0, 0.5, 0.5, 0.5]),
-            new Float32Array([0.5, 1.0, 1.0, 0.5]),
-            new Float32Array([0.8, 0.4, 0.2, 0.5]),
-            new Float32Array([1.0, 0.5, 1.0, 0.5]),
-            new Float32Array([1.0, 1.0, 0.5, 0.5]),
+            new Float32Array([0.3, 0.9, 0.3, 0.6]),
+            new Float32Array([0.3, 0.3, 0.9, 0.6]),
+            new Float32Array([0.9, 0.3, 0.3, 0.6]),
+            new Float32Array([0.3, 0.9, 0.9, 0.6]),
+            new Float32Array([0.9, 0.3, 0.0, 0.6]),
+            new Float32Array([0.9, 0.3, 0.9, 0.6]),
+            new Float32Array([0.9, 0.9, 0.3, 0.6]),
         ];
 
         /**
