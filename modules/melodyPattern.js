@@ -464,7 +464,7 @@ export class MelodyPatternRenderer {
         const percussionAttackingMagnification = this.percussionAttackingMagnification;
         const percussionReleasingTime = this.percussionReleasingTime;
 
-        const circleTime = 3.0 / Math.max(0.01, noteMagnification / 100);
+        const circleTime = 4.0 / Math.max(0.01, noteMagnification / 100);
         const unitSize = 0.8 * Math.min(width, reservedHeight) / circleTime;
         let noteAppearingTime;
         switch (this.noteDirection) {
