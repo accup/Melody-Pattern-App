@@ -169,6 +169,14 @@ export class MelodyPatternRenderer {
          * ノート方向
          */
         this.noteDirection = 'inward';
+        /**
+         * 上部マージン
+         */
+        this.marginTop = 0;
+        /**
+         * 下部マージン
+         */
+        this.marginBottom = 0;
 
         /**
          * ノート・パーカッションの色（発生時）
@@ -442,20 +450,22 @@ export class MelodyPatternRenderer {
 
         const width = gl.canvas.width;
         const height = gl.canvas.height;
+        const reservedHeight = height - this.marginTop - this.marginBottom;
+        const offsetY = 0.5 * (this.marginBottom - this.marginTop);
 
         const currentTime = this._vocal.currentTime;
         const currentMeasures = this._score.ticksToFixedMeasures(this._score.secondsToTicks(currentTime));
 
         const noteMagnification = this.noteMagnification;
         const percussionX = 0.05 * width;
-        const percussionY = 0.45 * height;
+        const percussionY = 0.45 * reservedHeight;
         const percussionW = 0.4 * width;
         const percussionAppearingMagnification = this.percussionAppearingMagnification;
         const percussionAttackingMagnification = this.percussionAttackingMagnification;
         const percussionReleasingTime = this.percussionReleasingTime;
 
         const circleTime = 3.0 / Math.max(0.01, noteMagnification / 100);
-        const unitSize = 0.8 * Math.min(width, height) / circleTime;
+        const unitSize = 0.8 * Math.min(width, reservedHeight) / circleTime;
         let noteAppearingTime;
         switch (this.noteDirection) {
             case 'inward':
@@ -500,7 +510,7 @@ export class MelodyPatternRenderer {
                     matrixUniform, false,
                     orthoTranslateScaleMatrix(
                         sw, sh, 1,
-                        dx, dy, 0,
+                        dx, offsetY + dy, 0,
                         width, height,
                     ),
                 );
@@ -530,7 +540,7 @@ export class MelodyPatternRenderer {
                     matrixUniform, false,
                     orthoTranslateScaleMatrix(
                         sw, sh, 1,
-                        dx, dy, 0,
+                        dx, offsetY + dy, 0,
                         width, height,
                     ),
                 );
@@ -557,7 +567,7 @@ export class MelodyPatternRenderer {
                 matrixUniform, false,
                 orthoTranslateScaleMatrix(
                     sw, sh, 1,
-                    dx, dy, 0,
+                    dx, offsetY + dy, 0,
                     width, height,
                 ),
             );
@@ -585,7 +595,7 @@ export class MelodyPatternRenderer {
                     matrixUniform, false,
                     orthoTranslateScaleMatrix(
                         sw, sh, 1,
-                        dx, dy, 0,
+                        dx, offsetY + dy, 0,
                         width, height,
                     ),
                 );
@@ -615,7 +625,7 @@ export class MelodyPatternRenderer {
                     matrixUniform, false,
                     orthoTranslateScaleMatrix(
                         sw, sh, 1,
-                        dx, dy, 0,
+                        dx, offsetY + dy, 0,
                         width, height,
                     ),
                 );

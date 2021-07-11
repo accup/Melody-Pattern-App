@@ -5,6 +5,8 @@ import { MelodyPatternRenderer } from './modules/melodyPattern.js';
 
 window.addEventListener('load', e => {
     const app = document.getElementById('app');
+    const headPanel = document.getElementById('device-and-music-data-panel');
+    const tailPanel = document.getElementById('tool-panel');
     const melodyPanel = document.getElementById('melody-panel');
     /** @type {HTMLCanvasElement} */
     const melodyPanelCanvas = document.getElementById('melody-panel-canvas');
@@ -142,6 +144,13 @@ window.addEventListener('load', e => {
         initButtonGroup(changeRenderingModeButtonGroup, value => {
             renderer.noteDirection = value;
         });
+
+        function updateMargin() {
+            renderer.marginTop = headPanel.clientHeight;
+            renderer.marginBottom = tailPanel.clientHeight;
+        }
+        window.addEventListener('resize', updateMargin);
+        updateMargin();
 
         requestAnimationFrame(function renderingLoop() {
             renderer.render();
